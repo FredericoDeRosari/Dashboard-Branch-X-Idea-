@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Portfolio Analytics & Early Warning System | Bank Mandiri Micro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mandiri-blue:#003D79;
+  --mandiri-blue-deep:#00274F;
+  --mandiri-blue-mid:#0B5AA0;
+  --mandiri-yellow:#FFC72C;
+  --mandiri-yellow-deep:#E5A800;
+  --bg:#EEF2F7;
+  --panel:#FFFFFF;
+  --panel-alt:#F7F9FC;
+  --border:#E1E7EF;
+  --text:#152238;
+  --text-muted:#5B6B84;
+  --text-faint:#8C99AD;
+  --green:#12805C;
+  --green-bg:#E4F6EE;
+  --red:#C22A2A;
+  --red-bg:#FCEAEA;
+  --amber:#B4790A;
+  --amber-bg:#FDF3DE;
+  --shadow-sm: 0 1px 2px rgba(15,35,65,.06), 0 1px 1px rgba(15,35,65,.04);
+  --shadow-md: 0 6px 20px -6px rgba(15,35,65,.14), 0 2px 6px rgba(15,35,65,.06);
+  --radius: 14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Sans',-apple-system,Segoe UI,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Manrope',sans-serif;margin:0;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+::selection{background:var(--mandiri-yellow);color:var(--mandiri-blue-deep);}
+
+/* ===== TOP BAR ===== */
+.topbar{
+  background:linear-gradient(100deg,var(--mandiri-blue-deep) 0%, var(--mandiri-blue) 55%, var(--mandiri-blue-mid) 100%);
+  color:#fff;
+  padding:14px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+  box-shadow:0 4px 18px rgba(0,20,45,.25);
+}
+.brand{display:flex;align-items:center;gap:14px;}
+.brand-mark{
+  width:42px;height:42px;border-radius:10px;
+  background:var(--mandiri-yellow);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+}
+.brand-mark svg{width:24px;height:24px;}
+.brand-text .eyebrow{
+  font-size:10.5px;letter-spacing:.14em;font-weight:600;color:var(--mandiri-yellow);
+  text-transform:uppercase;margin-bottom:2px;
+}
+.brand-text h1{font-size:18px;font-weight:800;letter-spacing:.01em;color:#fff;line-height:1.15;}
+.brand-text .sub{font-size:12.5px;color:#C9DAEE;margin-top:2px;font-weight:500;}
+.topbar-right{display:flex;align-items:center;gap:18px;}
+.snapshot-chip{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.16);
+  padding:7px 14px;border-radius:999px;font-size:12.5px;color:#DCEBFF;
+}
+.snapshot-chip b{color:#fff;font-weight:600;}
+.dot-live{width:7px;height:7px;border-radius:50%;background:#3ED598;box-shadow:0 0 0 3px rgba(62,213,152,.25);}
+.user-chip{
+  display:flex;align-items:center;gap:9px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+  padding:6px 12px 6px 6px;border-radius:999px;
+}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--mandiri-yellow);color:var(--mandiri-blue-deep);
+  font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;}
+.user-chip .u-name{font-size:12.5px;font-weight:600;color:#fff;line-height:1.1;}
+.user-chip .u-role{font-size:10.5px;color:#B7CBE6;}
+
+/* ===== FILTER BAR ===== */
+.filterbar{
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  padding:12px 28px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  position:sticky;top:70px;z-index:40;
+  box-shadow:0 2px 8px rgba(15,35,65,.04);
+}
+.seg-control{
+  display:flex;background:var(--panel-alt);border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px;
+}
+.seg-btn{
+  border:none;background:transparent;padding:7px 16px;border-radius:8px;font-size:12.5px;font-weight:600;
+  color:var(--text-muted);cursor:pointer;transition:.15s;font-family:inherit;
+}
+.seg-btn.active{background:var(--mandiri-blue);color:#fff;box-shadow:var(--shadow-sm);}
+.seg-btn:not(.active):hover{color:var(--mandiri-blue);}
+.filter-sep{width:1px;height:26px;background:var(--border);margin:0 4px;}
+.fselect{
+  appearance:none;
+  background:var(--panel-alt) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%235B6B84"/></svg>') no-repeat right 10px center;
+  border:1px solid var(--border);border-radius:9px;
+  padding:7.5px 30px 7.5px 12px;font-size:12.5px;font-weight:500;color:var(--text);
+  font-family:inherit;cursor:pointer;min-width:118px;
+}
+.fselect:hover{border-color:var(--mandiri-blue-mid);}
+.filterbar .reset-link{margin-left:auto;font-size:12px;color:var(--mandiri-blue-mid);font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:5px;}
+.filterbar .reset-link:hover{text-decoration:underline;}
+
+/* ===== LAYER TABS ===== */
+.layer-tabs{
+  display:flex;gap:6px;padding:14px 28px 0 28px;max-width:1680px;margin:0 auto;
+}
+.layer-tab{
+  flex:1;background:var(--panel);border:1px solid var(--border);border-bottom:none;
+  border-radius:12px 12px 0 0;padding:13px 18px;cursor:pointer;transition:.15s;
+  display:flex;align-items:center;gap:11px;position:relative;top:1px;
+}
+.layer-tab .lt-num{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--text-faint);
+  background:var(--panel-alt);border-radius:6px;padding:3px 7px;
+}
+.layer-tab .lt-txt b{display:block;font-size:13.5px;font-weight:700;color:var(--text);}
+.layer-tab .lt-txt span{font-size:11px;color:var(--text-muted);}
+.layer-tab.active{background:var(--mandiri-blue);border-color:var(--mandiri-blue);z-index:2;box-shadow:var(--shadow-md);}
+.layer-tab.active .lt-num{background:rgba(255,255,255,.18);color:var(--mandiri-yellow);}
+.layer-tab.active .lt-txt b{color:#fff;}
+.layer-tab.active .lt-txt span{color:#C9DAEE;}
+.layer-tab:not(.active):hover{border-color:var(--mandiri-blue-mid);}
+
+/* ===== LAYOUT ===== */
+.wrap{max-width:1680px;margin:0 auto;padding:0 28px 40px 28px;}
+.dash-grid{
+  display:grid;grid-template-columns:1fr 328px;gap:20px;
+  background:var(--panel);border:1px solid var(--border);border-radius:0 12px 12px 12px;
+  padding:22px;box-shadow:var(--shadow-md);
+}
+.main-col{min-width:0;display:flex;flex-direction:column;gap:22px;}
+.layer-panel{display:none;flex-direction:column;gap:22px;}
+.layer-panel.active{display:flex;}
+
+/* section header */
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px;}
+.sec-head h2{font-size:15px;font-weight:700;color:var(--mandiri-blue-deep);letter-spacing:.01em;}
+.sec-head .sec-tag{font-size:11px;color:var(--text-faint);font-weight:500;}
+.sec-desc{font-size:12px;color:var(--text-muted);margin-top:2px;}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.kpi-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 17px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:.15s;
+}
+.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.kpi-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--mandiri-blue));}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.kpi-icon{width:32px;height:32px;border-radius:9px;background:var(--accent-bg,#E9F1FA);display:flex;align-items:center;justify-content:center;}
+.kpi-icon svg{width:17px;height:17px;stroke:var(--accent,var(--mandiri-blue));}
+.kpi-label{font-size:11.5px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.kpi-value{font-size:23px;font-weight:800;color:var(--text);font-family:'Manrope',sans-serif;line-height:1.1;}
+.kpi-foot{display:flex;align-items:center;gap:6px;margin-top:8px;}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:6px;}
+.delta.up{color:var(--red);background:var(--red-bg);}
+.delta.down{color:var(--green);background:var(--green-bg);}
+.delta.good-up{color:var(--green);background:var(--green-bg);}
+.kpi-foot .vs{font-size:11px;color:var(--text-faint);}
+
+/* generic card */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px 19px;box-shadow:var(--shadow-sm);}
+.grid-2{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+
+/* composition */
+.comp-row{display:flex;gap:20px;align-items:center;}
+.comp-legend{flex:1;display:flex;flex-direction:column;gap:12px;}
+.comp-item{display:flex;align-items:center;gap:10px;}
+.comp-swatch{width:11px;height:11px;border-radius:3px;flex:none;}
+.comp-item .ci-txt{flex:1;}
+.comp-item .ci-name{font-size:12.5px;font-weight:700;color:var(--text);}
+.comp-item .ci-sub{font-size:11px;color:var(--text-muted);}
+.comp-item .ci-pct{font-size:16px;font-weight:800;font-family:'Manrope';color:var(--text);}
+.stackbar{height:10px;border-radius:6px;overflow:hidden;display:flex;margin-top:14px;}
+
+/* status cards row */
+.status-card{border-radius:12px;padding:15px 16px;flex:1;border:1px solid var(--border);position:relative;}
+.status-card .sc-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.85;}
+.status-card .sc-val{font-size:26px;font-weight:800;font-family:'Manrope';margin-top:6px;}
+.status-card .sc-sub{font-size:11.5px;margin-top:4px;opacity:.85;}
+.status-card.dg{background:var(--red-bg);color:var(--red);}
+.status-card.up{background:var(--green-bg);color:var(--green);}
+.status-card.st{background:var(--panel-alt);color:var(--mandiri-blue-deep);border-color:var(--border);}
+
+/* ranking table */
+.rank-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.rank-table th{
+  text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);
+  font-weight:700;padding:0 10px 8px 10px;border-bottom:1px solid var(--border);
+}
+.rank-table td{padding:10px;border-bottom:1px solid #F0F3F8;vertical-align:middle;}
+.rank-table tr:last-child td{border-bottom:none;}
+.rank-table tr:hover td{background:var(--panel-alt);}
+.rank-num{width:22px;height:22px;border-radius:6px;background:var(--panel-alt);color:var(--text-muted);
+  font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.sector-bar-bg{width:90px;height:6px;background:#EEF1F6;border-radius:4px;overflow:hidden;}
+.sector-bar-fill{height:100%;border-radius:4px;background:var(--mandiri-blue-mid);}
+.risk-callout{
+  margin-top:2px;background:var(--red-bg);border:1px solid #F3C7C7;border-radius:10px;
+  padding:11px 14px;display:flex;gap:10px;align-items:flex-start;
+}
+.risk-callout svg{width:17px;height:17px;stroke:var(--red);flex:none;margin-top:1px;}
+.risk-callout b{color:var(--red);}
+.risk-callout .rc-txt{font-size:12px;color:#7A1F1F;line-height:1.5;}
+
+/* bade impact */
+.bade-impact{display:flex;gap:16px;}
+.bi-block{flex:1;background:var(--panel-alt);border-radius:12px;padding:14px 16px;text-align:left;border:1px solid var(--border);}
+.bi-block .bi-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+.bi-block .bi-val{font-size:21px;font-weight:800;font-family:'Manrope';margin-top:5px;}
+.bi-block.warn{background:var(--red-bg);border-color:#F3C7C7;}
+.bi-block.warn .bi-val{color:var(--red);}
+.bi-progress{width:100%;height:7px;background:#E7ECF3;border-radius:5px;margin-top:9px;overflow:hidden;}
+.bi-progress i{display:block;height:100%;background:var(--red);border-radius:5px;}
+
+/* data table */
+.data-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;min-width:920px;}
+.data-table thead th{
+  background:var(--mandiri-blue-deep);color:#DCEBFF;text-align:left;padding:10px 12px;font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.04em;font-weight:700;position:sticky;top:0;
+}
+.data-table tbody td{padding:9px 12px;border-bottom:1px solid #EEF1F6;color:var(--text);}
+.data-table tbody tr:hover td{background:var(--panel-alt);}
+.tag{display:inline-flex;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;}
+.tag.kur{background:#E4F0FB;color:var(--mandiri-blue-mid);}
+.tag.kum{background:#FDF3DE;color:var(--amber);}
+.tlight{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:11.5px;}
+.tdot{width:9px;height:9px;border-radius:50%;flex:none;}
+.tdot.red{background:var(--red);box-shadow:0 0 0 3px var(--red-bg);}
+.tdot.amber{background:var(--amber);box-shadow:0 0 0 3px var(--amber-bg);}
+.tdot.green{background:var(--green);box-shadow:0 0 0 3px var(--green-bg);}
+.risk-score{font-weight:800;font-family:'IBM Plex Mono';}
+.col-chip{font-family:'IBM Plex Mono';font-weight:700;padding:1px 7px;border-radius:5px;background:var(--panel-alt);}
+
+/* chart card headers */
+.chart-card .ch-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.chart-card h3{font-size:13px;font-weight:700;color:var(--text);}
+.chart-card .ch-badge{font-size:10.5px;font-weight:600;color:var(--text-muted);background:var(--panel-alt);padding:3px 9px;border-radius:999px;}
+canvas{max-width:100%;}
+
+.card.chart-card canvas {
+    max-width: 100%;
+    max-height: 300px;
+}
+
+/* gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;}
+.gauge-val{font-size:34px;font-weight:800;font-family:'Manrope';color:var(--mandiri-blue-deep);margin-top:-42px;}
+.gauge-lbl{font-size:11.5px;color:var(--text-muted);font-weight:600;margin-top:2px;}
+.gauge-badge{margin-top:8px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+
+/* risk score distribution */
+.risk-dist-row{display:flex;flex-direction:column;gap:10px;}
+.rd-item{display:flex;align-items:center;gap:10px;}
+.rd-item .rd-lbl{width:70px;font-size:12px;font-weight:700;color:var(--text-muted);}
+.rd-bar-bg{flex:1;height:16px;background:var(--panel-alt);border-radius:8px;overflow:hidden;}
+.rd-bar-fill{height:100%;border-radius:8px;}
+.rd-item .rd-pct{width:40px;text-align:right;font-size:12.5px;font-weight:800;font-family:'IBM Plex Mono';}
+
+/* probability card */
+.prob-card{display:flex;align-items:center;gap:20px;}
+.prob-ring{width:118px;height:118px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(var(--red) 0% 82%, #EEF1F6 82% 100%);position:relative;}
+.prob-ring::before{content:"";position:absolute;inset:11px;background:var(--panel);border-radius:50%;}
+.prob-ring span{position:relative;font-size:24px;font-weight:800;font-family:'Manrope';color:var(--red);}
+.factor-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.f-chip{font-size:11px;font-weight:600;background:var(--panel-alt);border:1px solid var(--border);padding:4px 10px;border-radius:999px;color:var(--text-muted);}
+.f-chip b{color:var(--red);}
+
+/* golden window */
+.golden-card{display:flex;align-items:center;gap:18px;background:linear-gradient(120deg,#FFF8E6,#FFF3D0);border:1px solid #F4DFA0;}
+.golden-num{font-size:44px;font-weight:800;font-family:'Manrope';color:var(--mandiri-blue-deep);line-height:1;}
+.golden-num span{font-size:15px;font-weight:700;color:var(--amber);display:block;margin-top:2px;}
+
+/* ews recommendation cards */
+.ews-card{border-left:4px solid var(--accent, var(--mandiri-blue));background:var(--panel-alt);border-radius:0 12px 12px 0;padding:13px 15px;}
+.ews-card .ews-tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent,var(--mandiri-blue));}
+.ews-card .ews-title{font-size:13px;font-weight:700;color:var(--text);margin-top:4px;}
+.ews-card .ews-body{font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5;}
+.ews-card .ews-reco{margin-top:8px;font-size:12px;font-weight:600;color:var(--mandiri-blue-deep);
+  background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:flex;gap:6px;align-items:flex-start;}
+.ews-card .ews-reco svg{width:13px;height:13px;stroke:var(--mandiri-yellow-deep);flex:none;margin-top:1px;}
+
+/* opportunity map placeholder */
+.map-shell{
+  position:relative;min-height:340px;border-radius:12px;overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(0,61,121,.04), rgba(0,61,121,.08)),
+    repeating-linear-gradient(0deg, #E4EAF2 0, #E4EAF2 1px, transparent 1px, transparent 32px),
+    repeating-linear-gradient(90deg, #E4EAF2 0, #E4EAF2 1px, transparent 1px, transparent 32px),
+    var(--panel-alt);
+  border:1px dashed #C4D0E0;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.map-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+.map-badge{
+  font-size:12.5px;font-weight:700;color:var(--text-faint);letter-spacing:.03em;
+  background:var(--panel);border:1px solid var(--border);border-radius:999px;
+  padding:9px 18px;box-shadow:var(--shadow-sm);
+}
+.map-legend{
+  position:absolute;bottom:14px;left:14px;background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;padding:11px 14px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:7px;
+}
+
+.marker{
+    position:absolute;
+    width:130px;
+    height:130px;
+    border-radius:50%;
+    border:3px solid #fff;
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    z-index:5;
+    opacity:0.5;
+}
+
+.marker.high{
+    background:#16a34a;
+}
+
+.marker.medium{
+    background:#f59e0b;
+}
+
+.marker.low{
+    background:#ef4444;
+}
+
+.lg-row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-muted);font-weight:500;}
+.lg-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+/* opportunity ranking table extras */
+.opp-score{font-weight:800;font-family:'IBM Plex Mono';}
+.opp-badge{display:inline-flex;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:700;}
+.opp-badge.high{background:var(--green-bg);color:var(--green);}
+.opp-badge.med{background:var(--amber-bg);color:var(--amber);}
+.opp-badge.low{background:var(--red-bg);color:var(--red);}
+
+/* insights panel */
+.insights-panel{
+  background:linear-gradient(165deg,var(--mandiri-blue-deep),var(--mandiri-blue));
+  border-radius:var(--radius);padding:20px;color:#fff;height:fit-content;position:sticky;top:150px;
+  box-shadow:var(--shadow-md);
+}
+.ip-head{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
+.ip-head svg{width:18px;height:18px;stroke:var(--mandiri-yellow);}
+.ip-head h3{font-size:14px;font-weight:800;color:#fff;}
+.ip-sub{font-size:11px;color:#AEC7E6;margin-bottom:14px;}
+.ip-item{display:flex;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.12);}
+.ip-item:first-of-type{border-top:none;}
+.ip-dot{width:7px;height:7px;border-radius:50%;background:var(--mandiri-yellow);margin-top:6px;flex:none;}
+.ip-txt{font-size:12.5px;line-height:1.55;color:#E7EFFA;}
+.ip-txt b{color:var(--mandiri-yellow);font-weight:700;}
+.ip-reco{
+  margin-top:14px;background:rgba(255,199,44,.12);border:1px solid rgba(255,199,44,.35);
+  border-radius:10px;padding:12px 13px;
+}
+.ip-reco .ip-reco-lbl{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--mandiri-yellow);margin-bottom:5px;}
+.ip-reco p{font-size:12.5px;color:#fff;line-height:1.55;font-weight:500;}
+.ip-updated{margin-top:14px;font-size:10.5px;color:#8FAAC9;text-align:center;}
+
+/* footer */
+.dash-footer{text-align:center;padding:18px 0 4px 0;font-size:11px;color:var(--text-faint);}
+
+/* responsive */
+@media(max-width:1180px){
+  .dash-grid{grid-template-columns:1fr;}
+  .insights-panel{position:relative;top:0;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .grid-3{grid-template-columns:1fr;}
+}
+@media(max-width:640px){
+  .kpi-grid{grid-template-columns:1fr;}
+  .layer-tab .lt-txt span{display:none;}
+  .topbar{padding:12px 16px;}
+  .wrap{padding:0 12px 30px 12px;}
+  .layer-tabs{padding:14px 12px 0 12px;}
+  .filterbar{padding:10px 12px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 20 L12 4 L20 20 Z" stroke="#003D79" stroke-width="2" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="eyebrow">Bank Mandiri &middot; Micro Segment (KUR &amp; KUM)</div>
+      <h1>Credit Portfolio Analytics &amp; Early Warning System</h1>
+      <div class="sub">Officer Development Program &mdash; Branch / MBM / MKA / Area Command Center</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="snapshot-chip"><span class="dot-live"></span> Data per <b id="topbarDate">07 Jul 2026, 08:15 WIB</b></div>
+    <div class="user-chip">
+      <div class="avatar">BM</div>
+      <div>
+        <div class="u-name">Branch Manager</div>
+        <div class="u-role">Cabang Jakarta Selatan</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FILTER BAR ============ -->
+<div class="filterbar">
+  <div class="seg-control" id="productSeg">
+    <button class="seg-btn active" data-product="ALL">ALL</button>
+    <button class="seg-btn" data-product="KUR">KUR</button>
+    <button class="seg-btn" data-product="KUM">KUM</button>
+  </div>
+  <div class="filter-sep"></div>
+  <input type="date" class="fselect" id="fSnapshot" value="2026-07-07" style="min-width:150px;">
+  <select class="fselect" id="fMonth">
+    <option value="ALL">Bulan: Semua</option>
+    <option value="Feb">Februari 2026</option>
+    <option value="Mar">Maret 2026</option>
+    <option value="Apr">April 2026</option>
+    <option value="May">Mei 2026</option>
+    <option value="Jun">Juni 2026</option>
+    <option value="Jul" selected>Juli 2026</option>
+  </select>
+  <select class="fselect" id="fAO">
+    <option value="ALL">AO: Semua</option>
+    <option>Rina Kartika</option>
+    <option>Budi Santoso</option>
+    <option>Dewi Lestari</option>
+    <option>Ahmad Fauzi</option>
+    <option>Siti Nurhaliza</option>
+    <option>Andi Wijaya</option>
+  </select>
+  <select class="fselect" id="fLP">
+    <option value="ALL">Sektor: Semua</option>
+    <option>PERDAGANGAN</option>
+    <option>JASA</option>
+    <option>PERINDUSTRIAN</option>
+    <option>PETERNAKAN</option>
+    <option>INDUSTRI PENGOLAHAN</option>
+    <option>PERTANIAN</option>
+    <option>PERIKANAN</option>
+  </select>
+  <select class="fselect" id="fRisk">
+    <option value="ALL">Risk Level: Semua</option>
+    <option value="Kritis">Kritis (High)</option>
+    <option value="Siaga">Siaga (Medium)</option>
+    <option value="Aman">Aman (Low)</option>
+  </select>
+  <select class="fselect" id="fCOL">
+    <option value="ALL">COL: Semua</option>
+    <option value="1">Kol 1</option>
+    <option value="2">Kol 2</option>
+    <option value="3">Kol 3</option>
+  </select>
+  <div class="reset-link" id="resetFilters">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0B5AA0" stroke-width="2.4"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 21v-6h6"/></svg>
+    Reset Filter
+  </div>
+</div>
+
+<!-- ============ LAYER TABS ============ -->
+<div class="layer-tabs">
+  <div class="layer-tab active" data-layer="1">
+    <span class="lt-num">01</span>
+    <div class="lt-txt"><b>Daily Operational</b><span>Monitoring portofolio hari ini</span></div>
+  </div>
+  <div class="layer-tab" data-layer="2">
+    <span class="lt-num">02</span>
+    <div class="lt-txt"><b>Historical Trend</b><span>Analisis 6 bulan terakhir</span></div>
+  </div>
+  <div class="layer-tab" data-layer="3">
+    <span class="lt-num">03</span>
+    <div class="lt-txt"><b>Intelligence &amp; EWS</b><span>Prediksi &amp; rekomendasi dini</span></div>
+  </div>
+  <div class="layer-tab" data-layer="4">
+    <span class="lt-num">04</span>
+    <div class="lt-txt"><b>Opportunity Mapping</b><span>Peta akuisisi &amp; area prioritas</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="dash-grid">
+
+  <!-- ================= MAIN COLUMN ================= -->
+  <div class="main-col">
+
+    <!-- ========== LAYER 1 ========== -->
+    <div class="layer-panel active" id="layer1">
+
+      <div>
+        <div class="sec-head"><h2>Ringkasan Portofolio Hari Ini</h2><span class="sec-tag" id="kpiScopeTag">Segmen: ALL (KUR + KUM)</span></div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="sec-head"><h2>Komposisi Portofolio</h2><span class="sec-tag">KUR vs KUM</span></div>
+          <div class="comp-row">
+            <canvas id="compDonut" width="150" height="150" style="max-width:100px; max-height:100px;"></canvas>
+            <div class="comp-legend" id="compLegend"></div>
+          </div>
+          <div class="stackbar" id="compStack"></div>
+        </div>
+
+        <div class="card">
+          <div class="sec-head"><h2>Analisis Downgrade Harian</h2><span class="sec-tag">kol_is vs kol_was</span></div>
+          <div class="sec-desc">kol_is &gt; kol_was = Downgrade &middot; kol_is &lt; kol_was = Upgrade &middot; Setara = Stable</div>
+          <div style="display:flex;gap:10px;margin-top:14px;">
+            <div class="status-card dg">
+              <div class="sc-label">Downgrade</div>
+              <div class="sc-val" id="stDowngrade">47</div>
+              <div class="sc-sub">debitur hari ini</div>
+            </div>
+            <div class="status-card up">
+              <div class="sc-label">Upgrade</div>
+              <div class="sc-val" id="stUpgrade">22</div>
+              <div class="sc-sub">debitur hari ini</div>
+            </div>
+            <div class="status-card st">
+              <div class="sc-label">Stable</div>
+              <div class="sc-val" id="stStable">1,131</div>
+              <div class="sc-sub">debitur hari ini</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-head"><h2>Downgrade by Business Sector (LP_DESC)</h2><span class="sec-tag" id="rankScopeTag">Ranking &middot; ALL</span></div>
+        <table class="rank-table">
+          <thead><tr><th>#</th><th>Sektor Usaha</th><th>Jml Downgrade</th><th>Total BADE</th><th>Downgrade %</th><th>Share</th></tr></thead>
+          <tbody id="sectorRankBody"></tbody>
+        </table>
+        <div class="risk-callout" id="riskCallout">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+          <div class="rc-txt"><b>Highest Risk Segment:</b> <span id="riskCalloutTxt">Sektor PERDAGANGAN menyumbang 42% dari seluruh downgrade hari ini dengan total BADE terdampak Rp2,4 Miliar &mdash; prioritaskan kunjungan preventif AO ke segmen ini.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-head"><h2>BADE Impact &mdash; Eksposur Outstanding</h2><span class="sec-tag">Dampak nilai, bukan hanya jumlah debitur</span></div>
+        <div class="bade-impact">
+          <div class="bi-block">
+            <div class="bi-label">Total BADE (Outstanding)</div>
+            <div class="bi-val" id="biTotal">Rp 428,6 M</div>
+          </div>
+          <div class="bi-block">
+            <div class="bi-label">BADE at Risk (Zona Kuning + Downgrade)</div>
+            <div class="bi-val" id="biAtRisk">Rp 32,4 M</div>
+          </div>
+          <div class="bi-block warn">
+            <div class="bi-label">BADE Downgrade Hari Ini</div>
+            <div class="bi-val" id="biDowngrade">Rp 5,2 M</div>
+            <div class="bi-progress"><i id="biProgressBar" style="width:16%"></i></div>
+            <div class="sc-sub" style="margin-top:6px;color:var(--red);font-weight:600;" id="biPct">16% dari BADE at Risk</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-head"><h2>Top 20 Debitur Berisiko Tinggi</h2><span class="sec-tag" id="tableScopeTag">Diurutkan berdasarkan Risk Score</span></div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th>Debitur</th><th>Produk</th><th>Sektor (LP_DESC)</th><th>AO</th><th>Outstanding</th>
+              <th>DPD</th><th>Kol. Now</th><th>Kol. Prev</th><th>Risk Score</th><th>Status</th>
+            </tr></thead>
+            <tbody id="custTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LAYER 2 ========== -->
+    <div class="layer-panel" id="layer2">
+
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Trend Downgrade Bulanan</h3><span class="ch-badge">Feb&ndash;Jul 2026 &middot; +MA(3)</span></div>
+          <canvas id="chDowngradeTrend" height="200" style="max-height:200px;"; maxheight="200px"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Trend Upgrade Bulanan</h3><span class="ch-badge">Feb&ndash;Jul 2026</span></div>
+          <canvas id="chUpgradeTrend" height="200" style="max-height:200px;"; maxheight="200px"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Recovery Rate</h3><span class="ch-badge">% debitur pulih / bulan</span></div>
+          <canvas id="chRecovery" height="200" style="max-height:200px;"; maxheight="200px"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Komposisi BADE Bulanan</h3><span class="ch-badge">Healthy &middot; Yellow &middot; Downgrade &middot; Restru</span></div>
+          <canvas id="chBadeSplit" height="200" style="max-height:200px;"; maxheight="200px"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="ch-head"><h3>KUR vs KUM &mdash; Downgrade Rate</h3><span class="ch-badge">% per bulan</span></div>
+          <canvas id="chKurKumRate" height="200"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="ch-head"><h3>KUR vs KUM &mdash; Outstanding Growth</h3><span class="ch-badge">Rp Miliar</span></div>
+          <canvas id="chKurKumOut" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="ch-head"><h3>Trend Sektor Usaha (LP_DESC)</h3><span class="ch-badge">3 sektor kontributor downgrade terbesar</span></div>
+        <canvas id="chSectorTrend" height="150" style="max-width:100%;"></canvas>
+      </div>
+
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Rata-rata Days Past Due</h3><span class="ch-badge">Hari</span></div>
+          <canvas id="chAvgDPD" height="200"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Outstanding Bulanan</h3><span class="ch-badge">Rp Miliar</span></div>
+          <canvas id="chOutstanding" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="ch-head"><h3>Portfolio Health Index</h3><span class="ch-badge">Skala 0&ndash;100</span></div>
+          <div class="gauge-wrap">
+            <svg width="220" height="130" viewBox="0 0 220 130">
+              <path d="M20 110 A90 90 0 0 1 200 110" fill="none" stroke="#EEF1F6" stroke-width="18" stroke-linecap="round"/>
+              <path id="gaugeArc" d="M20 110 A90 90 0 0 1 200 110" fill="none" stroke="var(--red)" stroke-width="18" stroke-linecap="round"
+                stroke-dasharray="251.2" stroke-dashoffset="70"/>
+            </svg>
+            <div class="gauge-val" id="gaugeVal">73</div>
+            <div class="gauge-lbl">Indeks Kesehatan Portofolio &mdash; Juli 2026</div>
+            <div class="gauge-badge" id="gaugeBadge" style="background:var(--red-bg);color:var(--red);">Menurun 9 poin dalam 6 bulan</div>
+          </div>
+        </div>
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Top Weakest Segments</h3><span class="ch-badge">Ranking downgrade %</span></div>
+          <canvas id="chWeakest" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LAYER 3 ========== -->
+    <div class="layer-panel" id="layer3">
+
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="ch-head"><h3>Risk Score Distribution</h3><span class="ch-badge">Seluruh debitur aktif</span></div>
+          <div class="risk-dist-row">
+            <div class="rd-item"><div class="rd-lbl" style="color:var(--green);">Low</div>
+              <div class="rd-bar-bg"><div class="rd-bar-fill" style="width:68%;background:var(--green);"></div></div>
+              <div class="rd-pct" style="color:var(--green);">68%</div></div>
+            <div class="rd-item"><div class="rd-lbl" style="color:var(--amber);">Medium</div>
+              <div class="rd-bar-bg"><div class="rd-bar-fill" style="width:22%;background:var(--amber);"></div></div>
+              <div class="rd-pct" style="color:var(--amber);">22%</div></div>
+            <div class="rd-item"><div class="rd-lbl" style="color:var(--red);">High</div>
+              <div class="rd-bar-bg"><div class="rd-bar-fill" style="width:10%;background:var(--red);"></div></div>
+              <div class="rd-pct" style="color:var(--red);">10%</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch-head"><h3>Probability of Downgrade</h3><span class="ch-badge">Model prediktif (dummy)</span></div>
+          <div class="prob-card">
+            <div class="prob-ring"><span>82%</span></div>
+            <div style="flex:1;">
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Kombinasi faktor berikut menghasilkan probabilitas downgrade tertinggi pada debitur aktif:</div>
+              <div class="factor-chips">
+                <span class="f-chip">Sektor: <b>Perdagangan</b></span>
+                <span class="f-chip">DPD &gt; <b>5 hari</b></span>
+                <span class="f-chip">Saldo: <b>Rendah</b></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card golden-card">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>
+        <div>
+          <div class="golden-num">6 <span>Hari &mdash; Golden Window</span></div>
+        </div>
+        <div style="flex:1;font-size:12.5px;color:#6B5410;line-height:1.6;">
+          Rata-rata debitur berada <b>6 hari di Zona Kuning</b> sebelum turun kolektibilitas. AO masih memiliki jendela waktu ini untuk melakukan kunjungan preventif dan mencegah downgrade.
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-head"><h2>Early Warning Recommendations</h2><span class="sec-tag">Auto-generated dari pola portofolio</span></div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+          <div class="ews-card" style="--accent:var(--red);--accent-bg:var(--red-bg);">
+            <div class="ews-tag">Sektor Perdagangan</div>
+            <div class="ews-title">Downgrade meningkat 35% dalam 30 hari terakhir</div>
+            <div class="ews-body">Sektor Perdagangan menjadi kontributor downgrade terbesar dengan eksposur BADE Rp2,4 Miliar, didominasi debitur KUR dengan DPD &gt; 5 hari.</div>
+            <div class="ews-reco"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg> Lakukan kunjungan preventif ke debitur sektor Perdagangan minggu ini.</div>
+          </div>
+          <div class="ews-card" style="--accent:var(--mandiri-blue-mid);--accent-bg:#E4F0FB;">
+            <div class="ews-tag">Portofolio KUR</div>
+            <div class="ews-title">Risiko downgrade meningkat pada segmen KUR</div>
+            <div class="ews-body">KUR menyumbang 81% dari total downgrade portofolio hari ini, jauh di atas proporsi outstanding-nya (73%).</div>
+            <div class="ews-reco"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg> Review menyeluruh debitur KUR dengan DPD &gt; 5 hari pada Zona Kuning.</div>
+          </div>
+          <div class="ews-card" style="--accent:var(--amber);--accent-bg:var(--amber-bg);">
+            <div class="ews-tag">Recovery Rate</div>
+            <div class="ews-title">Recovery rate menurun dari 62% menjadi 53% dalam 6 bulan</div>
+            <div class="ews-body">Efektivitas penanganan Zona Kuning melemah, mengindikasikan perlunya penguatan proses collection dan restrukturisasi dini.</div>
+            <div class="ews-reco"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg> Evaluasi SOP collection & percepat restrukturisasi untuk debitur Zona Kuning &gt; 4 hari.</div>
+          </div>
+          <div class="ews-card" style="--accent:var(--green);--accent-bg:var(--green-bg);">
+            <div class="ews-tag">Sektor Perikanan &amp; Peternakan</div>
+            <div class="ews-title">Kontribusi downgrade terendah, portofolio relatif sehat</div>
+            <div class="ews-body">Kedua sektor ini secara konsisten menyumbang &lt;6% dari total downgrade selama 6 bulan terakhir.</div>
+            <div class="ews-reco"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="M3 17l9 5 9-5M3 12l9 5 9-5"/></svg> Pertahankan pola monitoring rutin, alokasikan sumber daya AO ke sektor prioritas lain.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LAYER 4 — OPPORTUNITY MAPPING ========== -->
+    <div class="layer-panel" id="layer4">
+
+      <div class="card" style="padding:16px;">
+        <div class="sec-head"><h2>Growth Opportunity Mapping</h2><span class="sec-tag"></span></div>
+        <div class="sec-desc" style="margin-bottom:14px;">Peta area akuisisi berdasarkan kepadatan debitur eksisting vs potensi UMKM di sekitarnya. Integrasikan dengan Google Maps / GIS internal untuk versi produksi.</div>
+        
+        <div class="map-shell" id="mapShell">
+          
+          <img src="./map_ganefo.png"
+              class="map-image"
+              alt="Opportunity Map">
+
+          <!-- ===== HIGH OPPORTUNITY ===== -->
+          <div class="marker high" style="top:68%; left:24%;"></div>
+          <div class="marker high" style="top:22%; left:46%;"></div>
+          <div class="marker high" style="top:62%; left:64%;"></div>
+
+          <!-- ===== MEDIUM OPPORTUNITY ===== -->
+          <div class="marker medium" style="top:26%; left:68%;"></div>
+          <div class="marker medium" style="top:48%; left:82%;"></div>
+          <div class="marker medium" style="top:45%; left:36%;"></div>
+
+          <!-- ===== SATURATED ===== -->
+          <div class="marker low" style="top:12%; left:30%;"></div>
+          <div class="marker low" style="top:78%; left:46%;"></div>
+
+
+          <div class="map-legend">
+              <div class="lg-row">
+                  <span class="lg-dot" style="background:var(--green);"></span>
+                  High Opportunity
+              </div>
+
+              <div class="lg-row">
+                  <span class="lg-dot" style="background:var(--amber);"></span>
+                  Medium
+              </div>
+
+              <div class="lg-row">
+                  <span class="lg-dot" style="background:var(--red);"></span>
+                  Saturated
+              </div>
+          </div>
+      </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-head"><h2>Opportunity Ranking</h2><span class="sec-tag" id="oppScopeTag">Area prioritas untuk fokus akuisisi</span></div>
+        <table class="rank-table">
+          <thead><tr><th>#</th><th>Area / Kecamatan</th><th>Debitur Eksisting</th><th>Estimasi Potensi UMKM</th><th>Opportunity Score</th><th>Kategori</th></tr></thead>
+          <tbody id="oppRankBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= EXECUTIVE INSIGHTS PANEL ================= -->
+  <div class="insights-panel">
+    <div class="ip-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+      <h3>Executive Insights</h3>
+    </div>
+    <div class="ip-sub">Narasi otomatis berdasarkan data portofolio hari ini</div>
+    <div id="ipItems"></div>
+    <div class="ip-reco">
+      <div class="ip-reco-lbl">Rekomendasi Prioritas</div>
+      <p id="ipReco">Prioritaskan kunjungan preventif untuk debitur sektor Perdagangan dengan DPD &gt; 5 hari sebelum melewati Golden Window 6 hari.</p>
+    </div>
+    <div class="ip-updated" id="ipUpdated">Diperbarui otomatis &middot; 07 Jul 2026, 08:15 WIB</div>
+  </div>
+
+</div>
+</div>
+
+<div class="dash-footer">Bank Mandiri &middot; Officer Development Program &mdash; Credit Portfolio Analytics &amp; EWS Prototype. Seluruh data merupakan data dummy untuk keperluan demonstrasi konsep.</div>
+
+<script>
+/* =========================================================================
+   DATA MODEL — dummy but internally consistent
+   ========================================================================= */
+const KPI = {
+  ALL:{debitur:'18.542',debiturDelta:0.8,
+       bade:'Rp 428,6 M',badeDelta:1.2,
+       outKUR:'Rp 312,4 M',outKURDelta:1.5,
+       outKUM:'Rp 116,2 M',outKUMDelta:0.4,
+       downgrade:'47',downgradeDelta:18,
+       upgrade:'22',upgradeDelta:-6,
+       zonaKuning:'386',zkDelta:9,
+       tunggakan:'612',tunggakanDelta:3,
+       badeRisk:'Rp 32,4 M',badeRiskDelta:16},
+  KUR:{debitur:'13.536',debiturDelta:0.9,
+       bade:'Rp 312,4 M',badeDelta:1.5,
+       outKUR:'Rp 312,4 M',outKURDelta:1.5,
+       outKUM:'—',outKUMDelta:0,
+       downgrade:'38',downgradeDelta:22,
+       upgrade:'16',upgradeDelta:-4,
+       zonaKuning:'300',zkDelta:11,
+       tunggakan:'460',tunggakanDelta:4,
+       badeRisk:'Rp 24,5 M',badeRiskDelta:19},
+  KUM:{debitur:'5.006',debiturDelta:0.4,
+       bade:'Rp 116,2 M',badeDelta:0.4,
+       outKUR:'—',outKURDelta:0,
+       outKUM:'Rp 116,2 M',outKUMDelta:0.4,
+       downgrade:'9',downgradeDelta:8,
+       upgrade:'6',upgradeDelta:-9,
+       zonaKuning:'86',zkDelta:3,
+       tunggakan:'152',tunggakanDelta:1,
+       badeRisk:'Rp 7,9 M',badeRiskDelta:7}
+};
+
+const KPI_META = [
+  {key:'debitur',   dkey:'debiturDelta',   label:'Total Debitur',        accent:'#003D79', bg:'#E9F1FA', icon:'users',   invert:false},
+  {key:'bade',      dkey:'badeDelta',      label:'Total BADE (Outstanding)', accent:'#0B5AA0', bg:'#E4F0FB', icon:'wallet',  invert:false},
+  {key:'outKUR',    dkey:'outKURDelta',    label:'Outstanding KUR',      accent:'#0B5AA0', bg:'#E4F0FB', icon:'kur',     invert:false},
+  {key:'outKUM',    dkey:'outKUMDelta',    label:'Outstanding KUM',      accent:'#B4790A', bg:'#FDF3DE', icon:'kum',     invert:false},
+  {key:'downgrade', dkey:'downgradeDelta', label:'Downgrade Hari Ini',   accent:'#C22A2A', bg:'#FCEAEA', icon:'down',    invert:true},
+  {key:'upgrade',   dkey:'upgradeDelta',   label:'Upgrade Hari Ini',     accent:'#12805C', bg:'#E4F6EE', icon:'up',      invert:false},
+  {key:'zonaKuning',dkey:'zkDelta',        label:'Total Zona Kuning',    accent:'#B4790A', bg:'#FDF3DE', icon:'alert',   invert:true},
+  {key:'tunggakan', dkey:'tunggakanDelta', label:'Total Tunggakan',      accent:'#C22A2A', bg:'#FCEAEA', icon:'clock',   invert:true},
+  {key:'badeRisk',  dkey:'badeRiskDelta',  label:'BADE at Risk',         accent:'#C22A2A', bg:'#FCEAEA', icon:'shield',  invert:true},
+];
+
+const ICONS = {
+  users:'<circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5"/><circle cx="17" cy="8" r="2.6"/><path d="M22 20c0-2.6-2-4.6-4.5-5.2"/>',
+  wallet:'<rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><circle cx="17" cy="14.2" r="1.3" fill="currentColor" stroke="none"/>',
+  kur:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M7 12h10M7 15.5h6"/>',
+  kum:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M7 9h6M7 15.5h10"/>',
+  down:'<path d="M4 6l7 7 4-4 5 5"/><path d="M14 15h6v-6"/>',
+  up:'<path d="M4 18l7-7 4 4 5-5"/><path d="M14 9h6v6"/>',
+  alert:'<path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+  shield:'<path d="M12 3l8 3.5v5c0 5-3.4 8.7-8 9.5-4.6-.8-8-4.5-8-9.5v-5L12 3Z"/><path d="M9 12l2 2 4-4"/>'
+};
+
+const sectorRank = [
+  {sector:'PERDAGANGAN',        count:20, bade:2.4, pct:42, level:'high'},
+  {sector:'JASA',                count:9,  bade:0.9, pct:19, level:'medium'},
+  {sector:'INDUSTRI PENGOLAHAN', count:6,  bade:0.7, pct:13, level:'medium'},
+  {sector:'PERINDUSTRIAN',       count:5,  bade:0.5, pct:11, level:'medium'},
+  {sector:'PERTANIAN',           count:4,  bade:0.4, pct:9,  level:'low'},
+  {sector:'PETERNAKAN',          count:2,  bade:0.2, pct:4,  level:'low'},
+  {sector:'PERIKANAN',           count:1,  bade:0.1, pct:2,  level:'low'},
+];
+
+const opportunityAreas = [
+  {area:'Kec. Pasar Minggu',    existing:842,  potential:2650, score:88, cat:'high'},
+  {area:'Kec. Cilandak',        existing:610,  potential:1980, score:79, cat:'high'},
+  {area:'Kec. Jagakarsa',       existing:530,  potential:1740, score:75, cat:'high'},
+  {area:'Kec. Pesanggrahan',    existing:940,  potential:1620, score:58, cat:'medium'},
+  {area:'Kec. Kebayoran Lama',  existing:1180, potential:1450, score:47, cat:'medium'},
+  {area:'Kec. Mampang Prapatan',existing:1360, potential:1180, score:35, cat:'medium'},
+  {area:'Kec. Tebet',           existing:1720, potential:960,  score:21, cat:'low'},
+  {area:'Kec. Kebayoran Baru',  existing:1890, potential:840,  score:15, cat:'low'},
+];
+
+const customers = [
+  {name:'Toko Sumber Rejeki',            product:'KUR', sector:'PERDAGANGAN',        ao:'Rina Kartika',   out:185, dpd:12, colNow:3, colPrev:2, score:88, status:'Kritis'},
+  {name:'CV Berkah Jaya Logistik',       product:'KUM', sector:'JASA',                ao:'Budi Santoso',   out:420, dpd:9,  colNow:3, colPrev:2, score:81, status:'Kritis'},
+  {name:'UD Tani Makmur',                product:'KUR', sector:'PERTANIAN',           ao:'Dewi Lestari',   out:95,  dpd:15, colNow:3, colPrev:1, score:90, status:'Kritis'},
+  {name:'Bengkel Motor Sejahtera',       product:'KUR', sector:'JASA',                ao:'Ahmad Fauzi',    out:65,  dpd:7,  colNow:2, colPrev:1, score:74, status:'Siaga'},
+  {name:'Toko Bangunan Mitra Karya',     product:'KUR', sector:'PERDAGANGAN',        ao:'Siti Nurhaliza',  out:210, dpd:6,  colNow:2, colPrev:1, score:70, status:'Siaga'},
+  {name:'Peternakan Ayam Barokah',       product:'KUM', sector:'PETERNAKAN',          ao:'Andi Wijaya',    out:340, dpd:10, colNow:3, colPrev:2, score:83, status:'Kritis'},
+  {name:'CV Industri Plastik Nusantara', product:'KUM', sector:'INDUSTRI PENGOLAHAN', ao:'Rina Kartika',   out:580, dpd:8,  colNow:2, colPrev:2, score:76, status:'Siaga'},
+  {name:'Toko Elektronik Cahaya',        product:'KUR', sector:'PERDAGANGAN',        ao:'Budi Santoso',    out:130, dpd:5,  colNow:2, colPrev:1, score:65, status:'Siaga'},
+  {name:'UD Perikanan Samudra',          product:'KUR', sector:'PERIKANAN',           ao:'Dewi Lestari',   out:78,  dpd:11, colNow:3, colPrev:2, score:85, status:'Kritis'},
+  {name:'Konveksi Sinar Abadi',          product:'KUR', sector:'INDUSTRI PENGOLAHAN', ao:'Ahmad Fauzi',    out:150, dpd:4,  colNow:2, colPrev:1, score:58, status:'Siaga'},
+  {name:'Toko Sembako Anugerah',         product:'KUR', sector:'PERDAGANGAN',        ao:'Siti Nurhaliza',  out:88,  dpd:14, colNow:3, colPrev:2, score:87, status:'Kritis'},
+  {name:'CV Konstruksi Mandiri Karya',   product:'KUM', sector:'PERINDUSTRIAN',       ao:'Andi Wijaya',    out:620, dpd:6,  colNow:2, colPrev:2, score:69, status:'Siaga'},
+  {name:'Warung Makan Sederhana',        product:'KUR', sector:'JASA',                ao:'Rina Kartika',   out:45,  dpd:3,  colNow:1, colPrev:1, score:42, status:'Aman'},
+  {name:'Toko Pupuk Subur Tani',         product:'KUR', sector:'PERTANIAN',           ao:'Budi Santoso',   out:102, dpd:9,  colNow:3, colPrev:2, score:79, status:'Siaga'},
+  {name:'UD Kerajinan Rotan',            product:'KUR', sector:'PERINDUSTRIAN',       ao:'Dewi Lestari',   out:60,  dpd:2,  colNow:1, colPrev:1, score:38, status:'Aman'},
+  {name:'CV Distribusi Sembako Jaya',    product:'KUM', sector:'PERDAGANGAN',        ao:'Ahmad Fauzi',     out:480, dpd:13, colNow:3, colPrev:2, score:89, status:'Kritis'},
+  {name:'Peternakan Sapi Perah Lestari', product:'KUM', sector:'PETERNAKAN',          ao:'Siti Nurhaliza', out:390, dpd:7,  colNow:2, colPrev:2, score:72, status:'Siaga'},
+  {name:'Toko Material Bangunan Sentosa',product:'KUR', sector:'PERDAGANGAN',        ao:'Andi Wijaya',     out:175, dpd:1,  colNow:1, colPrev:1, score:30, status:'Aman'},
+  {name:'Bengkel Las Karya Utama',       product:'KUR', sector:'JASA',                ao:'Rina Kartika',   out:55,  dpd:8,  colNow:2, colPrev:1, score:73, status:'Siaga'},
+  {name:'UD Hasil Laut Nusantara',       product:'KUR', sector:'PERIKANAN',           ao:'Budi Santoso',   out:68,  dpd:5,  colNow:2, colPrev:1, score:61, status:'Siaga'},
+];
+
+const months = ['Feb','Mar','Apr','May','Jun','Jul'];
+const trendDowngrade = [31,29,35,40,38,47];
+const trendUpgrade   = [18,20,19,25,24,22];
+const trendRecovery  = [62,64,60,58,55,53];
+const badeHealthy    = [360,364,368,372,378,380.6];
+const badeYellow     = [40,42,38,36,35,38];
+const badeDowngrade  = [18,20,22,24,20,32.4];
+const badeRestru     = [6,7,7,8,9,9];
+const kurDgRate      = [1.6,1.5,1.8,2.0,1.9,2.4];
+const kumDgRate      = [0.9,0.8,1.0,1.1,1.0,1.3];
+const kurOutGrowth   = [286,292,298,304,309,312.4];
+const kumOutGrowth   = [104,107,109,112,114,116.2];
+const sectorTrendA   = [12,13,15,17,16,20]; // Perdagangan
+const sectorTrendB   = [6,7,6,8,8,9];       // Jasa
+const sectorTrendC   = [3,4,5,5,6,6];       // Industri Pengolahan
+const avgDPD         = [4.2,4.5,4.8,5.1,5.3,5.6];
+const outstandingTrd = [398,405,411,417,423,428.6];
+const healthIndex    = [82,80,78,77,75,73];
+
+/* =========================================================================
+   HELPERS
+   ========================================================================= */
+function iconSvg(name){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.alert}</svg>`;
+}
+function deltaChip(value, invert){
+  const positive = value >= 0;
+  const bad = invert ? positive : !positive;
+  const cls = bad ? 'up' : 'down';
+  const arrow = positive ? '&#8593;' : '&#8595;';
+  return `<span class="delta ${cls}">${arrow} ${Math.abs(value)}%</span>`;
+}
+
+const CHART_FONT = {family:"'IBM Plex Sans', sans-serif", size:11};
+Chart.defaults.font.family = CHART_FONT.family;
+Chart.defaults.color = '#5B6B84';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.legend.labels.font = {size:11};
+
+/* =========================================================================
+   RENDER: KPI CARDS
+   ========================================================================= */
+function renderKPIs(product){
+  const data = KPI[product];
+  const grid = document.getElementById('kpiGrid');
+  grid.innerHTML = KPI_META.map(m=>{
+    const val = data[m.key];
+    const d = data[m.dkey];
+    return `
+    <div class="kpi-card" style="--accent:${m.accent};--accent-bg:${m.bg};">
+      <div class="kpi-top">
+        <div class="kpi-icon">${iconSvg(m.icon)}</div>
+      </div>
+      <div class="kpi-label">${m.label}</div>
+      <div class="kpi-value">${val}</div>
+      <div class="kpi-foot">${deltaChip(d, m.invert)}<span class="vs">vs kemarin</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('kpiScopeTag').textContent = `Segmen: ${product === 'ALL' ? 'ALL (KUR + KUM)' : product}`;
+}
+
+/* =========================================================================
+   RENDER: PORTFOLIO COMPOSITION (donut + legend + stackbar)
+   ========================================================================= */
+let compChart;
+function renderComposition(product){
+  const kurPct = 73, kumPct = 27;
+  const legend = document.getElementById('compLegend');
+  const stack = document.getElementById('compStack');
+
+  legend.innerHTML = `
+    <div class="comp-item">
+      <div class="comp-swatch" style="background:#003D79;"></div>
+      <div class="ci-txt"><div class="ci-name">KUR</div><div class="ci-sub">Outstanding Rp 312,4 M</div></div>
+      <div class="ci-pct">${kurPct}%</div>
+    </div>
+    <div class="comp-item">
+      <div class="comp-swatch" style="background:#FFC72C;"></div>
+      <div class="ci-txt"><div class="ci-name">KUM</div><div class="ci-sub">Outstanding Rp 116,2 M</div></div>
+      <div class="ci-pct">${kumPct}%</div>
+    </div>`;
+  stack.innerHTML = `<div style="width:${kurPct}%;background:#003D79;"></div><div style="width:${kumPct}%;background:#FFC72C;"></div>`;
+
+  const ctx = document.getElementById('compDonut');
+  const highlight = product; // ALL | KUR | KUM
+  const dataVals = [kurPct, kumPct];
+  const colors = ['#003D79','#FFC72C'].map((c,i)=>{
+    if(highlight==='ALL') return c;
+    const isActive = (i===0 && highlight==='KUR') || (i===1 && highlight==='KUM');
+    return isActive ? c : c + '55';
+  });
+  if(compChart) compChart.destroy();
+  compChart = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels:['KUR','KUM'], datasets:[{data:dataVals, backgroundColor:colors, borderWidth:0}]},
+    options:{cutout:'72%', plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}%`}}}}
+  });
+}
+
+/* =========================================================================
+   RENDER: DOWNGRADE/UPGRADE/STABLE STATUS CARDS
+   ========================================================================= */
+function renderStatusCards(product){
+  const map = {
+    ALL:{dg:47, up:22, st:1131},
+    KUR:{dg:38, up:16, st:812},
+    KUM:{dg:9,  up:6,  st:319}
+  };
+  const v = map[product];
+  document.getElementById('stDowngrade').textContent = v.dg;
+  document.getElementById('stUpgrade').textContent = v.up;
+  document.getElementById('stStable').textContent = v.st.toLocaleString('id-ID');
+}
+
+/* =========================================================================
+   RENDER: SECTOR RANKING TABLE
+   ========================================================================= */
+function renderSectorRank(product, sectorFilter){
+  const scale = product === 'ALL' ? 1 : (product === 'KUR' ? 0.81 : 0.19);
+  const tbody = document.getElementById('sectorRankBody');
+  let rows = sectorRank.map(r=>({...r, count: Math.max(1, Math.round(r.count*scale)), bade:+(r.bade*scale).toFixed(2)}));
+  if(sectorFilter && sectorFilter !== 'ALL'){
+    rows = rows.filter(r=>r.sector === sectorFilter);
+  }
+  const maxCount = Math.max(...rows.map(r=>r.count), 1);
+  tbody.innerHTML = rows.map((r,i)=>{
+    const dotColor = r.level==='high' ? 'var(--red)' : (r.level==='medium' ? 'var(--amber)' : 'var(--green)');
+    return `<tr>
+      <td><span class="rank-num">${i+1}</span></td>
+      <td style="font-weight:600;">${r.sector}</td>
+      <td>${r.count}</td>
+      <td>Rp ${r.bade.toLocaleString('id-ID',{minimumFractionDigits:1,maximumFractionDigits:1})} M</td>
+      <td style="color:${dotColor};font-weight:700;">${r.pct}%</td>
+      <td><div class="sector-bar-bg"><div class="sector-bar-fill" style="width:${(r.count/maxCount)*100}%;background:${dotColor};"></div></div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('rankScopeTag').textContent = `Ranking · ${product}${sectorFilter && sectorFilter!=='ALL' ? ' · '+sectorFilter : ''}`;
+
+  const top = sectorRank[0];
+  document.getElementById('riskCalloutTxt').innerHTML =
+    `Sektor <b>${top.sector}</b> menyumbang <b>${top.pct}%</b> dari seluruh downgrade hari ini dengan total BADE terdampak Rp${(top.bade*scale).toFixed(1)} Miliar &mdash; prioritaskan kunjungan preventif AO ke segmen ini.`;
+}
+
+/* =========================================================================
+   RENDER: BADE IMPACT
+   ========================================================================= */
+function renderBadeImpact(product){
+  const map = {
+    ALL:{total:'Rp 428,6 M', risk:'Rp 32,4 M', dg:'Rp 5,2 M', pct:16},
+    KUR:{total:'Rp 312,4 M', risk:'Rp 24,5 M', dg:'Rp 4,2 M', pct:17},
+    KUM:{total:'Rp 116,2 M', risk:'Rp 7,9 M',  dg:'Rp 1,0 M', pct:13}
+  };
+  const v = map[product];
+  document.getElementById('biTotal').textContent = v.total;
+  document.getElementById('biAtRisk').textContent = v.risk;
+  document.getElementById('biDowngrade').textContent = v.dg;
+  document.getElementById('biPct').textContent = `${v.pct}% dari BADE at Risk`;
+  document.getElementById('biProgressBar').style.width = v.pct + '%';
+}
+
+/* =========================================================================
+   RENDER: TOP 20 CUSTOMER TABLE
+   ========================================================================= */
+function renderCustomerTable(filters){
+  const tbody = document.getElementById('custTableBody');
+  let rows = customers.slice();
+  if(filters.product !== 'ALL') rows = rows.filter(r=>r.product===filters.product);
+  if(filters.ao !== 'ALL') rows = rows.filter(r=>r.ao===filters.ao);
+  if(filters.lp !== 'ALL') rows = rows.filter(r=>r.sector===filters.lp);
+  if(filters.risk !== 'ALL') rows = rows.filter(r=>r.status===filters.risk);
+  if(filters.col !== 'ALL') rows = rows.filter(r=>String(r.colNow)===filters.col);
+  rows = rows.sort((a,b)=>b.score-a.score).slice(0,20);
+
+  if(rows.length===0){
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:22px;">Tidak ada debitur yang sesuai dengan filter saat ini.</td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map(r=>{
+      const dot = r.status==='Kritis' ? 'red' : (r.status==='Siaga' ? 'amber' : 'green');
+      const tagClass = r.product==='KUR' ? 'kur' : 'kum';
+      return `<tr>
+        <td style="font-weight:600;">${r.name}</td>
+        <td><span class="tag ${tagClass}">${r.product}</span></td>
+        <td>${r.sector}</td>
+        <td>${r.ao}</td>
+        <td>Rp ${r.out} Jt</td>
+        <td>${r.dpd} hr</td>
+        <td><span class="col-chip">Kol ${r.colNow}</span></td>
+        <td><span class="col-chip">Kol ${r.colPrev}</span></td>
+        <td class="risk-score">${r.score}</td>
+        <td><span class="tlight"><span class="tdot ${dot}"></span>${r.status}</span></td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('tableScopeTag').textContent = `${rows.length} debitur ditampilkan · diurutkan berdasarkan Risk Score`;
+}
+
+/* =========================================================================
+   RENDER: OPPORTUNITY RANKING TABLE (LAYER 4)
+   ========================================================================= */
+function renderOpportunityRank(){
+  const tbody = document.getElementById('oppRankBody');
+  const rows = opportunityAreas.slice().sort((a,b)=>b.score-a.score);
+  tbody.innerHTML = rows.map((r,i)=>{
+    const badgeClass = r.cat === 'high' ? 'high' : (r.cat === 'medium' ? 'med' : 'low');
+    const badgeLabel = r.cat === 'high' ? 'High Opportunity' : (r.cat === 'medium' ? 'Medium' : 'Saturated');
+    return `<tr>
+      <td><span class="rank-num">${i+1}</span></td>
+      <td style="font-weight:600;">${r.area}</td>
+      <td>${r.existing.toLocaleString('id-ID')}</td>
+      <td>${r.potential.toLocaleString('id-ID')}</td>
+      <td class="opp-score">${r.score}</td>
+      <td><span class="opp-badge ${badgeClass}">${badgeLabel}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* =========================================================================
+   RENDER: EXECUTIVE INSIGHTS
+   ========================================================================= */
+function renderInsights(product){
+  const map = {
+    ALL:[
+      'Downgrade hari ini <b>naik 18%</b> dibanding kemarin, mencapai 47 debitur.',
+      'Sektor <b>Perdagangan</b> menyumbang <b>42%</b> dari seluruh downgrade hari ini.',
+      'Segmen <b>KUR</b> menyumbang <b>81%</b> dari total portofolio downgrade.',
+      'BADE at Risk mencapai <b>Rp32,4 Miliar</b>, naik 16% dibanding kemarin.',
+      'Rata-rata downgrade terjadi setelah <b>6 hari</b> berada di Zona Kuning.'
+    ],
+    KUR:[
+      'Downgrade KUR hari ini: <b>38 debitur</b> (81% dari total downgrade portofolio).',
+      'BADE downgrade KUR mencapai <b>Rp4,2 Miliar</b>, 17% dari BADE at Risk KUR.',
+      'Sektor <b>Perdagangan</b> mendominasi downgrade KUR dengan porsi terbesar.',
+      'Outstanding KUR tumbuh <b>1,5%</b> dibanding kemarin menjadi Rp312,4 Miliar.',
+      'Zona Kuning KUR meningkat <b>11%</b>, perlu perhatian khusus AO.'
+    ],
+    KUM:[
+      'Downgrade KUM hari ini: <b>9 debitur</b> (19% dari total downgrade portofolio).',
+      'BADE downgrade KUM sebesar <b>Rp1,0 Miliar</b>, 13% dari BADE at Risk KUM.',
+      'Sektor <b>Jasa</b> dan <b>Peternakan</b> menjadi kontributor utama downgrade KUM.',
+      'Outstanding KUM relatif stabil, tumbuh <b>0,4%</b> menjadi Rp116,2 Miliar.',
+      'Recovery rate KUM tercatat lebih baik dibanding KUR pada periode ini.'
+    ]
+  };
+  const recoMap = {
+    ALL:'Prioritaskan kunjungan preventif untuk debitur sektor Perdagangan dengan DPD &gt; 5 hari sebelum melewati Golden Window 6 hari.',
+    KUR:'Fokuskan tim AO pada review debitur KUR sektor Perdagangan dengan DPD &gt; 5 hari untuk menekan laju downgrade.',
+    KUM:'Pantau debitur KUM sektor Jasa &amp; Peternakan dengan outstanding besar untuk mencegah eskalasi risiko.'
+  };
+  document.getElementById('ipItems').innerHTML = map[product].map(txt=>`
+    <div class="ip-item"><div class="ip-dot"></div><div class="ip-txt">${txt}</div></div>`).join('');
+  document.getElementById('ipReco').innerHTML = recoMap[product];
+}
+
+/* =========================================================================
+   CHARTS — LAYER 2
+   ========================================================================= */
+const gridColor = '#EEF1F6';
+function baseLineOpts(extra={}){
+  return Object.assign({
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index', intersect:false},
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      x:{grid:{display:false}},
+      y:{grid:{color:gridColor}, beginAtZero:false}
+    }
+  }, extra);
+}
+
+let charts = {};
+function buildStaticCharts(){
+  // Downgrade trend + moving average
+  const ma = trendDowngrade.map((_,i,arr)=>{
+    const start = Math.max(0,i-2);
+    const slice = arr.slice(start,i+1);
+    return +(slice.reduce((a,b)=>a+b,0)/slice.length).toFixed(1);
+  });
+  charts.downgrade = new Chart(document.getElementById('chDowngradeTrend'), {
+    type:'line',
+    data:{labels:months, datasets:[
+      {label:'Downgrade', data:trendDowngrade, borderColor:'#C22A2A', backgroundColor:'#C22A2A22', fill:true, tension:.35, pointRadius:3},
+      {label:'Moving Avg (3)', data:ma, borderColor:'#003D79', borderDash:[5,4], fill:false, tension:.35, pointRadius:0}
+    ]},
+    options: baseLineOpts()
+  });
+
+  charts.upgrade = new Chart(document.getElementById('chUpgradeTrend'), {
+    type:'line',
+    data:{labels:months, datasets:[
+      {label:'Upgrade', data:trendUpgrade, borderColor:'#12805C', backgroundColor:'#12805C22', fill:true, tension:.35, pointRadius:3}
+    ]},
+    options: baseLineOpts({plugins:{legend:{display:false}}})
+  });
+
+  charts.recovery = new Chart(document.getElementById('chRecovery'), {
+    type:'line',
+    data:{labels:months, datasets:[
+      {label:'Recovery Rate (%)', data:trendRecovery, borderColor:'#FFC72C', backgroundColor:'#FFC72C33', fill:true, tension:.35, pointRadius:3}
+    ]},
+    options: baseLineOpts({plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:gridColor}, ticks:{callback:v=>v+'%'}}}})
+  });
+
+  charts.bade = new Chart(document.getElementById('chBadeSplit'), {
+    type:'bar',
+    data:{labels:months, datasets:[
+      {label:'Healthy', data:badeHealthy, backgroundColor:'#0B5AA0'},
+      {label:'Yellow Zone', data:badeYellow, backgroundColor:'#FFC72C'},
+      {label:'Downgrade', data:badeDowngrade, backgroundColor:'#C22A2A'},
+      {label:'Restructured', data:badeRestru, backgroundColor:'#8C99AD'}
+    ]},
+    options: baseLineOpts({scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:{color:gridColor}}}})
+  });
+
+  charts.kurKumRate = new Chart(document.getElementById('chKurKumRate'), {
+    type:'bar',
+    data:{labels:months, datasets:[
+      {label:'KUR', data:kurDgRate, backgroundColor:'#003D79', borderRadius:4},
+      {label:'KUM', data:kumDgRate, backgroundColor:'#FFC72C', borderRadius:4}
+    ]},
+    options: baseLineOpts({scales:{x:{grid:{display:false}}, y:{grid:{color:gridColor}, ticks:{callback:v=>v+'%'}}}})
+  });
+
+  charts.kurKumOut = new Chart(document.getElementById('chKurKumOut'), {
+    type:'line',
+    data:{labels:months, datasets:[
+      {label:'KUR', data:kurOutGrowth, borderColor:'#003D79', backgroundColor:'#003D7922', fill:true, tension:.35, pointRadius:3},
+      {label:'KUM', data:kumOutGrowth, borderColor:'#FFC72C', backgroundColor:'#FFC72C33', fill:true, tension:.35, pointRadius:3}
+    ]},
+    options: baseLineOpts()
+  });
+
+  charts.sectorTrend = new Chart(document.getElementById('chSectorTrend'), {
+    type:'line',
+    data:{labels:months, datasets:[
+      {label:'Perdagangan', data:sectorTrendA, borderColor:'#C22A2A', tension:.35, pointRadius:3},
+      {label:'Jasa', data:sectorTrendB, borderColor:'#0B5AA0', tension:.35, pointRadius:3},
+      {label:'Industri Pengolahan', data:sectorTrendC, borderColor:'#B4790A', tension:.35, pointRadius:3}
+    ]},
+    options: baseLineOpts()
+  });
+
+  charts.avgDPD = new Chart(document.getElementById('chAvgDPD'), {
+    type:'line',
+    data:{labels:months, datasets:[
+      {label:'Avg DPD (hari)', data:avgDPD, borderColor:'#B4790A', backgroundColor:'#B4790A22', fill:true, tension:.35, pointRadius:3}
+    ]},
+    options: baseLineOpts({plugins:{legend:{display:false}}})
+  });
+
+  charts.outstanding = new Chart(document.getElementById('chOutstanding'), {
+    type:'line',
+    data:{labels:months, datasets:[
+      {label:'Outstanding (Rp M)', data:outstandingTrd, borderColor:'#003D79', backgroundColor:'#003D7922', fill:true, tension:.35, pointRadius:3}
+    ]},
+    options: baseLineOpts({plugins:{legend:{display:false}}})
+  });
+
+  const weakestSorted = sectorRank.slice().sort((a,b)=>b.pct-a.pct);
+  charts.weakest = new Chart(document.getElementById('chWeakest'), {
+    type:'bar',
+    data:{labels:weakestSorted.map(s=>s.sector), datasets:[
+      {label:'Downgrade %', data:weakestSorted.map(s=>s.pct), backgroundColor:weakestSorted.map(s=> s.level==='high'?'#C22A2A': s.level==='medium'?'#B4790A':'#12805C'), borderRadius:4}
+    ]},
+    options: Object.assign(baseLineOpts({indexAxis:'y', plugins:{legend:{display:false}}}), {})
+  });
+
+  // gauge
+  setGauge(healthIndex[healthIndex.length-1]);
+}
+
+function setGauge(val){
+  const circumference = 251.2;
+  const offset = circumference - (circumference * (val/100));
+  const arc = document.getElementById('gaugeArc');
+  arc.setAttribute('stroke-dashoffset', offset);
+  const color = val>=75 ? '#12805C' : (val>=50 ? '#B4790A' : '#C22A2A');
+  arc.setAttribute('stroke', color);
+  document.getElementById('gaugeVal').textContent = val;
+  document.getElementById('gaugeVal').style.color = color;
+}
+
+/* =========================================================================
+   FILTER / STATE MANAGEMENT
+   ========================================================================= */
+const state = {product:'ALL', month:'Jul', ao:'ALL', lp:'ALL', risk:'ALL', col:'ALL'};
+
+function refreshLayer1(){
+  renderKPIs(state.product);
+  renderComposition(state.product);
+  renderStatusCards(state.product);
+  renderSectorRank(state.product, state.lp);
+  renderBadeImpact(state.product);
+  renderCustomerTable(state);
+  renderInsights(state.product);
+}
+
+document.getElementById('productSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('.seg-btn');
+  if(!btn) return;
+  document.querySelectorAll('#productSeg .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.product = btn.dataset.product;
+  refreshLayer1();
+});
+
+['fMonth','fAO','fLP','fRisk','fCOL'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', e=>{
+    const map = {fMonth:'month', fAO:'ao', fLP:'lp', fRisk:'risk', fCOL:'col'};
+    state[map[id]] = e.target.value;
+    refreshLayer1();
+  });
+});
+
+document.getElementById('fSnapshot').addEventListener('change', e=>{
+  const d = new Date(e.target.value+'T08:15:00');
+  const fmt = d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('topbarDate').textContent = `${fmt}, 08:15 WIB`;
+  document.getElementById('ipUpdated').textContent = `Diperbarui otomatis · ${fmt}, 08:15 WIB`;
+});
+
+document.getElementById('resetFilters').addEventListener('click', ()=>{
+  state.product='ALL'; state.month='Jul'; state.ao='ALL'; state.lp='ALL'; state.risk='ALL'; state.col='ALL';
+  document.querySelectorAll('#productSeg .seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.product==='ALL'));
+  document.getElementById('fMonth').value='Jul';
+  document.getElementById('fAO').value='ALL';
+  document.getElementById('fLP').value='ALL';
+  document.getElementById('fRisk').value='ALL';
+  document.getElementById('fCOL').value='ALL';
+  refreshLayer1();
+});
+
+/* Layer tab switching */
+document.querySelectorAll('.layer-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.layer-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.layer-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('layer'+tab.dataset.layer).classList.add('active');
+  });
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+refreshLayer1();
+buildStaticCharts();
+renderOpportunityRank();
+</script>
+</body>
+</html>
